@@ -1,0 +1,26 @@
+{
+  "name": "ausc",
+  "version": "1.0.0",
+  "description": "ausc backend",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "server": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "type": "module",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongodb": "^7.1.0",
+    "mongoose": "^9.2.1",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^7.0.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
