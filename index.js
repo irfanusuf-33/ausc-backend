@@ -17,7 +17,6 @@ process.on('uncaughtException', (error) => {
 
 const app = express();
 const PORT = process.env.PORT || 9002;
-const MONGO_URI = process.env.DATABASE_URL || "mongodb://127.0.0.1:27017";
 
 app.use(cors({
   origin: process.env.CLIENT_URL,  // frontend domain
@@ -33,25 +32,12 @@ app.use(express.json({ limit: "10mb" }));
 app.use("/api/contactus", contactus);
 app.use("/api/student", student);
 
-// Connect to MongoDB
-async function connectDB() {
-  try {
-    await mongoose.connect(MONGO_URI);
-    console.log("✅ MongoDB connected successfully");
-  } catch (error) {
-    console.error("❌ MongoDB connection failed:", error.message);
-    process.exit(1); // Exit if DB fails
-  }
-}
-
 // Debug and Health routes at the very top
 app.get("/api/health", (req, res) => {
 	res.status(200).json({ status: "ok", message: "Server is running", env: process.env.NODE_ENV });
 });
 
 // Start server only after DB connects
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
+app.listen(PORT, () => {
+	console.log(`🚀 Server running on port ${PORT}`);
 });
