@@ -19,7 +19,7 @@ const app = express();
 const PORT = process.env.PORT || 9002;
 
 app.use(cors({
-  origin: process.env.CLIENT_URL,  // frontend domain
+  origin: 'https://ausc.edu.au',  // frontend domain
   credentials: true,               // allow cookies
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
