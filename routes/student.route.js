@@ -10,6 +10,7 @@ router.post("/application", upload.fields([
     { name: "englishCertificate", maxCount: 1 },
     { name: "osid", maxCount: 1 },
     { name: "other", maxCount: 1 },
+    { name: "formData", maxCount: 1 },
 ]), studentApplicationForm);
 
 export default router;

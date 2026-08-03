@@ -10,6 +10,7 @@ export const studentApplicationForm = async (req, res) => {
         const englishCertificate = req.files?.englishCertificate?.[0];
         const osid = req.files?.osid?.[0];
         const other = req.files?.other?.[0];
+        const formData = req.files?.formData?.[0];
 
         // Render email template
         const html = EmailHelper.renderTemplate(studentApplicationTemplate, {
@@ -53,6 +54,13 @@ export const studentApplicationForm = async (req, res) => {
             attachments.push({
                 filename: other.originalname,
                 content: other.buffer,
+            });
+        }
+
+        if (formData) {
+            attachments.push({
+                filename: formData.originalname,
+                content: formData.buffer,
             });
         }
 
