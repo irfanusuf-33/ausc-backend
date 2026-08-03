@@ -13,11 +13,7 @@ export const studentApplicationForm = async (req, res) => {
         const formData = req.files?.formData?.[0];
 
         // Render email template
-        const html = EmailHelper.renderTemplate(studentApplicationTemplate, {
-            title,
-            givenName,
-            middleName,
-        });
+        const html = EmailHelper.renderTemplate(studentApplicationTemplate, {});
 
         // Prepare attachments
         const attachments = [];
