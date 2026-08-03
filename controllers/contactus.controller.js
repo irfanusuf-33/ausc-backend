@@ -8,12 +8,12 @@ export const contactUs = async (req, res) => {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
-		const html = EmailHelper.renderTemplate(contactUsTemplate, {
-			name: name,
-			email: email,
-			phone: phone,
-			message: message,
-		});
+        const html = EmailHelper.renderTemplate(contactUsTemplate, {
+            name: name,
+            email: email,
+            phone: phone,
+            message: message,
+        });
 
         const emailHelper = new EmailHelper();
         await emailHelper.sendEmail({
@@ -170,7 +170,7 @@ export const agentRegistrationForm = async (req, res) => {
 
         const emailHelper = new EmailHelper();
         await emailHelper.sendEmail({
-            to: process.env.NODEMAILER_EMAIL_RECIEVER,
+            to: process.env.NODEMAILER_EMAIL_RECIEVER_2,
             subject: "New AUSC Education Agent Application Received",
             text: `New agent application received from ${legalName}`,
             html: html,
