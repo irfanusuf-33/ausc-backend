@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import contactus from "./routes/contactus.route.js";
 import student from "./routes/student.route.js";
+import account from "./routes/user.route.js";
 import dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
 
@@ -44,6 +45,7 @@ app.use(cookieParser());
 // routes
 app.use("/api/contactus", contactus);
 app.use("/api/student", student);
+app.use('/api/account', account);
 
 // Debug and Health routes at the very top
 app.get("/api/health", (req, res) => {

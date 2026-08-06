@@ -134,6 +134,7 @@ export const agentRegistrationForm = async (req, res) => {
         const businessProfileFile = req.files?.businessProfileFile?.[0];
         const registrationCertificate = req.files?.registrationCertificate?.[0];
         const maraQeacCertificate = req.files?.maraQeacCertificate?.[0];
+        const formData = req.files?.formData?.[0];
 
         // 1. Prepare Database Save Promise
         const dbPromise = prisma.agentRegistration.create({
@@ -218,6 +219,13 @@ export const agentRegistrationForm = async (req, res) => {
                 attachments.push({
                     filename: maraQeacCertificate.originalname,
                     content: maraQeacCertificate.buffer,
+                });
+            }
+
+            if (formData) {
+                attachments.push({
+                    filename: formData.originalname,
+                    content: formData.buffer,
                 });
             }
 

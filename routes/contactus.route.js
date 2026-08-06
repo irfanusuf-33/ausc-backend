@@ -10,6 +10,7 @@ router.post("/agent-registration", upload.fields([
     { name: "businessProfileFile", maxCount: 1 },
     { name: "registrationCertificate", maxCount: 1 },
     { name: "maraQeacCertificate", maxCount: 1 },
+    { name: "formData", maxCount: 1 },
 ]), agentRegistrationForm);
 
 router.get('/contacts', isLoggedIn, hasAccess('readAccess'), getContactMessages);
