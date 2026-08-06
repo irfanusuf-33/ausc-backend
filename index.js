@@ -19,6 +19,7 @@ const app = express();
 const PORT = process.env.PORT || 9002;
 
 const allowedOrigins = [
+  'http://localhost:3000',
   'https://ausc.edu.au',
   'https://www.ausc.edu.au',
 ];
