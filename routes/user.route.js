@@ -1,6 +1,6 @@
 import express from 'express';
-import { login, addAccount, editAccount, deleteAccount, viewAllAccounts } from '../controllers/userController.js';
-import { isLoggedIn, hasAccess } from '../middlewares/authMiddleware.js';
+import { login, addAccount, editAccount, deleteAccount, viewAllAccounts } from '../controllers/user.controller.js';
+import { isLoggedIn, hasAccess } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
