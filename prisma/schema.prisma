@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model StudentApplication {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Document checklist
+  hasPassport                    Boolean @default(false)
+  hasCopiesOfAcademicOfHome      Boolean @default(false)
+  hasCopiesOfAcademicOfAustralia Boolean @default(false)
+  hasCurrentCOE                  Boolean @default(false)
+  hasQTEassessmentForm           Boolean @default(false)
+  hasCurriculumVitae             Boolean @default(false)
+  references                     String?
+  currentLocation                String?
+  applicationType                String?
+
+  // Personal Information
+  title        String?
+  givenName    String
+  middleName   String?
+  familyName   String
+  dateOfBirth  DateTime?
+  emailAddress String
+  mobile       String?
+  homePhone    String?
+
+  // Address
+  streetNumber  String?
+  streetName    String?
+  city          String?
+  stateProvince String?
+  postalCode    String?
+  country       String?
+
+  // Citizenship & Visa
+  countryOfCitizenship String?
+  passportNumber       String?
+  visaNumber           String?
+
+  // English Proficiency
+  ielts      String?
+  dateOfTest DateTime?
+
+  // Additional Personal Info
+  gender                           String?
+  countryOfBirth                   String?
+  cityOfBirth                      String?
+  austCitizenshipStatus            String?
+  aboriginalOrTorresStraitIslander String?
+  employmentStatus                 String?
+  doSpeakEnglishAtHome             Boolean?
+  requireEnglishAssisance          Boolean?
+  higheshtSchoolEducation          String?
+  yearCompleted                    String?
+  disabilities                     String?
+  priorEducation                   String?
+
+  // Contact & Emergency
+  alternateEmailAddress    String?
+  usi                      String?
+  emergencyContactName     String?
+  emergencyRelationship    String?
+  emergencyPhonNumber      String?
+  emergencyContactComments String?
+
+  // Course Information
+  qualificationLocation         String?
+  intakeDate                    DateTime?
+  isApplyingForCreditTransfer   Boolean?  @default(false)
+  isApplyingForRecognitionOfRPL Boolean?  @default(false)
+  courses                       String[]
+
+  // OSHC Information
+  oshcType             String?
+  oshcProviderName     String?
+  oschMembershipNumber String?
+  oschExpiryDate       DateTime?
+
+  // Language & Literacy Assessment
+  iCan                     Boolean? @default(false)
+  isMyFirstLang            Boolean? @default(false)
+  canReadTimeOnClock       Boolean? @default(false)
+  isMyFirstlang2           Boolean? @default(false)
+  canAddUpThings           Boolean? @default(false)
+  isMyFirstLang3           Boolean? @default(false)
+  canKnowHowMuchChange     Boolean? @default(false)
+  isMyFirstLang4           Boolean? @default(false)
+  canUsePhone              Boolean? @default(false)
+  isMyFirstLang5           Boolean? @default(false)
+  canTakePhoneMessage      Boolean? @default(false)
+  isMyFirstLang6           Boolean? @default(false)
+  canFillAFormForTimesheet Boolean? @default(false)
+  isMyFirstLang7           Boolean? @default(false)
+  canFollowInstructions    Boolean? @default(false)
+  isMyFirstLang8           Boolean? @default(false)
+
+  // Previous Attendance & Agreements
+  haveAttendedAUSCBefore  Boolean? @default(false)
+  agreeToBeContacted      Boolean? @default(false)
+  agreeTermsAndConditions Boolean? @default(false)
+
+  // Signature
+  fullName  String?
+  signature String?
+
+  // Agent Information
+  agentName    String?
+  agentEmail   String?
+  businessName String?
+  studentType  String?
+
+  @@map("studentApplication")
+}
