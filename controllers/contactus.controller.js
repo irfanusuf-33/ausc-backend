@@ -1,36 +1,80 @@
 import EmailHelper from "../helpers/emailHelper.js";
-import { contactUsTemplate, agentApplicationTemplate, studentApplicationTemplate } from "../templates/contactus.templates.js";
+import { contactUsTemplate, agentApplicationTemplate } from "../templates/contactus.templates.js";
+import prisma from "../lib/prisma.lib.js";
 
 export const contactUs = async (req, res) => {
+    console.log('Received contact us submission');
     try {
         const { name, email, phone, message } = req.body;
         if (!name || !email || !phone || !message) {
-            return res.status(400).json({ error: 'All fields are required' });
+            return res.status(400).json({ success: false, error: 'All fields are required' });
         }
 
-        const html = EmailHelper.renderTemplate(contactUsTemplate, {
-            name: name,
-            email: email,
-            phone: phone,
-            message: message,
+        // 1. Prepare Database Save Promise
+        const dbPromise = prisma.contactMessage.create({
+            data: {
+                name,
+                email,
+                phone,
+                message,
+            }
+        }).catch(err => {
+            console.error('Database save failed:', err);
+            return null; // Return null so Promise.allSettled doesn't reject completely
         });
 
-        const emailHelper = new EmailHelper();
-        await emailHelper.sendEmail({
-            to: process.env.NODEMAILER_EMAIL_RECIEVER,
-            subject: 'New contact message recieved',
-            text: "You have received a new contact message from " + name,
-            html: html
+        // 2. Prepare Email Sending Promise
+        const emailPromise = (async () => {
+            const html = EmailHelper.renderTemplate(contactUsTemplate, {
+                name: name,
+                email: email,
+                phone: phone,
+                message: message,
+            });
+
+            const emailHelper = new EmailHelper();
+            await emailHelper.sendEmail({
+                to: process.env.NODEMAILER_EMAIL_RECIEVER,
+                subject: 'New contact message received',
+                text: "You have received a new contact message from " + name,
+                html: html
+            });
+        })().catch(err => {
+            console.error('Email sending failed:', err);
+            return null;
         });
-        // Here you can add logic to save the contact message to a database or send an email
-        res.status(200).json({ message: 'Contact message received successfully' });
+
+        // Run both actions concurrently and independently
+        const results = await Promise.allSettled([dbPromise, emailPromise]);
+
+        const dbResult = results[0];
+        const emailResult = results[1];
+
+        // Check if critical core functionality completely tanked both
+        if (dbResult.status === 'rejected' && emailResult.status === 'rejected') {
+            throw new Error('Both database saving and email notification failed.');
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Contact message received successfully',
+            details: {
+                savedToDatabase: dbResult.status === 'fulfilled' && dbResult.value !== null,
+                emailSent: emailResult.status === 'fulfilled'
+            }
+        });
+
     } catch (error) {
         console.log('error from the contact us controller: ', error);
-        return res.status(500).json({ error: 'An error occurred while processing your request' });
+        return res.status(500).json({
+            success: false,
+            error: 'An error occurred while processing your request'
+        });
     }
 };
 
 export const agentRegistrationForm = async (req, res) => {
+    console.log('Received agent registration form submission');
     try {
         const {
             businessType,
@@ -91,326 +135,242 @@ export const agentRegistrationForm = async (req, res) => {
         const registrationCertificate = req.files?.registrationCertificate?.[0];
         const maraQeacCertificate = req.files?.maraQeacCertificate?.[0];
 
-        const html = EmailHelper.renderTemplate(agentApplicationTemplate, {
-            businessType,
-            legalName,
-            tradingName,
-            ownerName,
-            placeOfRegistration,
-            dateOfRegistration,
-            businessNumber,
-            maraNo,
-            qeacNo,
-            representingCountries,
-            ceoName,
-            email,
-            mobile,
-            landline,
-            contactPerson,
-            contactPersonEmail,
-            contactPersonMobile,
-            contactPersonLandline,
-            headOfficeAddress,
-            website,
-            numberOfBranches,
-            locationOfBranches,
-            coursesInterrestedIn,
-            nameOfIndustrialBody,
-            yearOfMembership,
-            institutionName,
-            yearOfAffiliation,
-            numberOfStudents,
-            firstYearIntakes,
-            sudentSupportType,
-            feesChargeDescription,
-            additionalInformationMarketing,
-            standardFourCompliance,
-            pierAccreditation,
-            EsosAct,
-            studentOnBoardingPurpose,
-            auscMarketingCompliance,
-            auscMarketingMaterial,
-            refereeOne,
-            refereeContactNumber,
-            organization,
-            position,
-            refereeEmailAddress,
-            refereeTwo,
-            refereeTwoContactNumber,
-            refereeTwoOrganization,
-            refereeTwoPosition,
-            refereeTwoEmailAddress,
-            authorizedPersonName,
-            authorizedPersonPosition,
-            signature,
+        // 1. Prepare Database Save Promise
+        const dbPromise = prisma.agentRegistration.create({
+            data: {
+                businessType,
+                legalName,
+                tradingName,
+                ownerName,
+                placeOfRegistration,
+                dateOfRegistration: dateOfRegistration ? new Date(dateOfRegistration) : null,
+                businessNumber,
+                maraNo,
+                qeacNo,
+                representingCountries,
+                ceoName,
+                email,
+                mobile,
+                landline,
+                contactPerson,
+                contactPersonEmail,
+                contactPersonMobile,
+                contactPersonLandline,
+                headOfficeAddress,
+                website,
+                numberOfBranches,
+                locationOfBranches,
+                coursesInterrestedIn,
+                nameOfIndustrialBody,
+                yearOfMembership,
+                institutionName,
+                yearOfAffiliation,
+                numberOfStudents,
+                firstYearIntakes,
+                sudentSupportType,
+                feesChargeDescription,
+                additionalInformationMarketing,
+                standardFourCompliance: standardFourCompliance === 'true' || standardFourCompliance === true,
+                pierAccreditation: pierAccreditation === 'true' || pierAccreditation === true,
+                EsosAct: EsosAct === 'true' || EsosAct === true,
+                studentOnBoardingPurpose: studentOnBoardingPurpose === 'true' || studentOnBoardingPurpose === true,
+                auscMarketingCompliance: auscMarketingCompliance === 'true' || auscMarketingCompliance === true,
+                auscMarketingMaterial: auscMarketingMaterial === 'true' || auscMarketingMaterial === true,
+                refereeOne,
+                refereeContactNumber,
+                organization,
+                position,
+                refereeEmailAddress,
+                refereeTwo,
+                refereeTwoContactNumber,
+                refereeTwoOrganization,
+                refereeTwoPosition,
+                refereeTwoEmailAddress,
+                authorizedPersonName,
+                authorizedPersonPosition,
+                signature,
+            }
+        }).catch(err => {
+            console.error('Database save failed:', err);
+            return null; // Return null so Promise.allSettled doesn't reject completely
         });
 
-        const attachments = [];
+        // 2. Prepare Email Sending Promise
+        const emailPromise = (async () => {
+            const html = EmailHelper.renderTemplate(agentApplicationTemplate, {});
+            const attachments = [];
 
-        if (businessProfileFile) {
-            attachments.push({
-                filename: businessProfileFile.originalname,
-                content: businessProfileFile.buffer,
+            if (businessProfileFile) {
+                attachments.push({
+                    filename: businessProfileFile.originalname,
+                    content: businessProfileFile.buffer,
+                });
+            }
+
+            if (registrationCertificate) {
+                attachments.push({
+                    filename: registrationCertificate.originalname,
+                    content: registrationCertificate.buffer,
+                });
+            }
+
+            if (maraQeacCertificate) {
+                attachments.push({
+                    filename: maraQeacCertificate.originalname,
+                    content: maraQeacCertificate.buffer,
+                });
+            }
+
+            const emailHelper = new EmailHelper();
+            await emailHelper.sendEmail({
+                to: process.env.NODEMAILER_EMAIL_RECIEVER_2,
+                subject: "New AUSC Education Agent Application Received",
+                text: `New agent application received from ${legalName}`,
+                html: html,
+                attachments
             });
-        }
-
-        if (registrationCertificate) {
-            attachments.push({
-                filename: registrationCertificate.originalname,
-                content: registrationCertificate.buffer,
-            });
-        }
-
-        if (maraQeacCertificate) {
-            attachments.push({
-                filename: maraQeacCertificate.originalname,
-                content: maraQeacCertificate.buffer,
-            });
-        }
-
-        const emailHelper = new EmailHelper();
-        await emailHelper.sendEmail({
-            to: process.env.NODEMAILER_EMAIL_RECIEVER_2,
-            subject: "New AUSC Education Agent Application Received",
-            text: `New agent application received from ${legalName}`,
-            html: html,
-            attachments
+        })().catch(err => {
+            console.error('Email sending failed:', err);
+            return null;
         });
+
+        // Run both actions concurrently and independently
+        const results = await Promise.allSettled([dbPromise, emailPromise]);
+
+        const dbResult = results[0];
+        const emailResult = results[1];
+
+        // Check if critical core functionality completely tanked both
+        if (dbResult.status === 'rejected' && emailResult.status === 'rejected') {
+            throw new Error('Both database saving and email notification failed.');
+        }
 
         return res.status(200).json({
             success: true,
-            message: "Application submitted successfully"
+            message: "Application submitted successfully",
+            details: {
+                savedToDatabase: dbResult.status === 'fulfilled' && dbResult.value !== null,
+                emailSent: emailResult.status === 'fulfilled'
+            }
         });
 
     } catch (error) {
         console.log('error from the agent registration form controller: ', error);
-        return res.status(500).json({ error: 'An error occurred while processing your request' });
+        return res.status(500).json({
+            success: false,
+            error: 'An error occurred while processing your request'
+        });
     }
-}
+};
 
-export const studentApplicationForm = async (req, res) => {
-
+export const getContactMessages = async (req, res) => {
     try {
-        const {
-            hasPassport,
-            hasCopiesOfAcademicOfHome,
-            hasCopiesOfAcademicOfAustralia,
-            hasCurrentCOE,
-            hasQTEassessmentForm,
-            hasCurriculumVitae,
-            references,
-            currentLocation,
-            applicationType,
-            title,
-            givenName,
-            middleName,
-            familyName,
-            dateOfBirth,
-            emailAddress,
-            mobile,
-            homePhone,
-            streetNumber,
-            streetName,
-            city,
-            stateProvince,
-            postalCode,
-            country,
-            countryOfCitizenship,
-            passportNumber,
-            visaNumber,
-            ielts,
-            dateOfTest,
-            gender,
-            countryOfBirth,
-            cityOfBirth,
-            austCitizenshipStatus,
-            aboriginalOrTorresStraitIslander,
-            employmentStatus,
-            doSpeakEnglishAtHome,
-            requireEnglishAssisance,
-            higheshtSchoolEducation,
-            yearCompleted,
-            disabilities,
-            priorEducation,
-            alternateEmailAddress,
-            usi,
-            emergencyContactName,
-            emergencyRelationship,
-            emergencyPhonNumber,
-            emergencyContactComments,
-            qualificationLocation,
-            intakeDate,
-            isApplyingForCreditTransfer,
-            isApplyingForRecognitionOfRPL,
-            oshcType,
-            oshcProviderName,
-            oschMembershipNumber,
-            oschExpiryDate,
-            iCan,
-            isMyFirstLang,
-            canReadTimeOnClock,
-            isMyFirstlang2,
-            canAddUpThings,
-            isMyFirstLang3,
-            canKnowHowMuchChange,
-            isMyFirstLang4,
-            canUsePhone,
-            isMyFirstLang5,
-            canTakePhoneMessage,
-            isMyFirstLang6,
-            canFillAFormForTimesheet,
-            isMyFirstLang7,
-            canFollowInstructions,
-            isMyFirstLang8,
-            haveAttendedAUSCBefore,
-            agreeToBeContacted,
-            agreeTermsAndConditions,
-            fullName,
-            signature,
-            agentName,
-            agentEmail,
-            businessName,
-            studentType,
-        } = req.body;
+        let { page = 1, limit = 10 } = req.query;
 
-        const attachments = [];
+        // Convert query parameters to integers
+        page = parseInt(page, 10);
+        limit = parseInt(limit, 10);
 
-        const passport = req.files?.passport?.[0];
-        const academicCertificate = req.files?.academicCertificate?.[0];
-        const englishCertificate = req.files?.englishCertificate?.[0];
-        const osid = req.files?.osid?.[0];
-        const other = req.files?.other?.[0];
+        // Ensure valid page and limit numbers
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 10;
 
-        if (passport) {
-            attachments.push({
-                filename: passport.originalname,
-                content: passport.buffer,
-            });
-        }
+        const skip = (page - 1) * limit;
 
-        if (academicCertificate) {
-            attachments.push({
-                filename: academicCertificate.originalname,
-                content: academicCertificate.buffer,
-            });
-        }
+        // Fetch paginated records and total count concurrently
+        const [messages, totalCount] = await Promise.all([
+            prisma.contactMessage.findMany({
+                skip,
+                take: limit,
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            }),
+            prisma.contactMessage.count()
+        ]);
 
-        if (englishCertificate) {
-            attachments.push({
-                filename: englishCertificate.originalname,
-                content: englishCertificate.buffer,
-            });
-        }
-        if (osid) {
-            attachments.push({
-                filename: osid.originalname,
-                content: osid.buffer,
-            });
-        }
-        if (other) {
-            attachments.push({
-                filename: other.originalname,
-                content: other.buffer,
-            });
-        }
-
-        const html = EmailHelper.renderTemplate(studentApplicationTemplate, {
-            hasPassport,
-            hasCopiesOfAcademicOfHome,
-            hasCopiesOfAcademicOfAustralia,
-            hasCurrentCOE,
-            hasQTEassessmentForm,
-            hasCurriculumVitae,
-            references,
-            currentLocation,
-            applicationType,
-            title,
-            givenName,
-            middleName,
-            familyName,
-            dateOfBirth,
-            emailAddress,
-            mobile,
-            homePhone,
-            streetNumber,
-            streetName,
-            city,
-            stateProvince,
-            postalCode,
-            country,
-            countryOfCitizenship,
-            passportNumber,
-            visaNumber,
-            ielts,
-            dateOfTest,
-            gender,
-            countryOfBirth,
-            cityOfBirth,
-            austCitizenshipStatus,
-            aboriginalOrTorresStraitIslander,
-            employmentStatus,
-            doSpeakEnglishAtHome,
-            requireEnglishAssisance,
-            higheshtSchoolEducation,
-            yearCompleted,
-            disabilities,
-            priorEducation,
-            alternateEmailAddress,
-            usi,
-            emergencyContactName,
-            emergencyRelationship,
-            emergencyPhonNumber,
-            emergencyContactComments,
-            qualificationLocation,
-            intakeDate,
-            isApplyingForCreditTransfer,
-            isApplyingForRecognitionOfRPL,
-            oshcType,
-            oshcProviderName,
-            oschMembershipNumber,
-            oschExpiryDate,
-            iCan,
-            isMyFirstLang,
-            canReadTimeOnClock,
-            isMyFirstlang2,
-            canAddUpThings,
-            isMyFirstLang3,
-            canKnowHowMuchChange,
-            isMyFirstLang4,
-            canUsePhone,
-            isMyFirstLang5,
-            canTakePhoneMessage,
-            isMyFirstLang6,
-            canFillAFormForTimesheet,
-            isMyFirstLang7,
-            canFollowInstructions,
-            isMyFirstLang8,
-            haveAttendedAUSCBefore,
-            agreeToBeContacted,
-            agreeTermsAndConditions,
-            fullName,
-            signature,
-            agentName,
-            agentEmail,
-            businessName,
-            studentType,
-        });
-
-        const emailHelper = new EmailHelper();
-        await emailHelper.sendEmail({
-            to: process.env.NODEMAILER_EMAIL_RECIEVER,
-            subject: "New AUSC Education Student Application Received",
-            text: `New student application received from ${givenName}`,
-            html: html,
-            attachments
-        });
+        const totalPages = Math.ceil(totalCount / limit);
 
         return res.status(200).json({
             success: true,
-            message: "Application submitted successfully"
+            message: 'Contact messages fetched successfully',
+            pagination: {
+                totalCount,
+                totalPages,
+                currentPage: page,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            },
+            data: messages
         });
+
     } catch (error) {
-        console.log('error from the student application form controller: ', error);
-        return res.status(500).json({ error: 'An error occurred while processing your request' });
+        console.error('Error in getContactMessages controller:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'An error occurred while fetching contact messages'
+        });
     }
-}
+};
+
+export const getAgentRegistrations = async (req, res) => {
+    try {
+        let { page = 1, limit = 10, search = '' } = req.query;
+
+        // Convert query parameters to integers
+        page = parseInt(page, 10);
+        limit = parseInt(limit, 10);
+
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 10;
+
+        const skip = (page - 1) * limit;
+
+        // Optional search filter across core fields
+        const whereClause = search ? {
+            OR: [
+                { legalName: { contains: search, mode: 'insensitive' } },
+                { tradingName: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+                { mobile: { contains: search, mode: 'insensitive' } }
+            ]
+        } : {};
+
+        // Fetch paginated records and total count concurrently
+        const [agents, totalCount] = await Promise.all([
+            prisma.agentRegistration.findMany({
+                where: whereClause,
+                skip,
+                take: limit,
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            }),
+            prisma.agentRegistration.count({ where: whereClause })
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Agent registrations fetched successfully',
+            pagination: {
+                totalCount,
+                totalPages,
+                currentPage: page,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            },
+            data: agents
+        });
+
+    } catch (error) {
+        console.error('Error in getAgentRegistrations controller:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'An error occurred while fetching agent registrations'
+        });
+    }
+};

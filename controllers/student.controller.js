@@ -263,3 +263,65 @@ export const studentApplicationForm = async (req, res) => {
         });
     }
 };
+
+export const getStudentApplications = async (req, res) => {
+    try {
+        let { page = 1, limit = 10, search = '' } = req.query;
+
+        // Convert query parameters to integers
+        page = parseInt(page, 10);
+        limit = parseInt(limit, 10);
+
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 10;
+
+        const skip = (page - 1) * limit;
+
+        // Optional search filter across core fields
+        const whereClause = search ? {
+            OR: [
+                { givenName: { contains: search, mode: 'insensitive' } },
+                { familyName: { contains: search, mode: 'insensitive' } },
+                { emailAddress: { contains: search, mode: 'insensitive' } },
+                { mobile: { contains: search, mode: 'insensitive' } },
+                { passportNumber: { contains: search, mode: 'insensitive' } }
+            ]
+        } : {};
+
+        // Fetch paginated records and total count concurrently
+        const [students, totalCount] = await Promise.all([
+            prisma.studentApplication.findMany({
+                where: whereClause,
+                skip,
+                take: limit,
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            }),
+            prisma.studentApplication.count({ where: whereClause })
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Student applications fetched successfully',
+            pagination: {
+                totalCount,
+                totalPages,
+                currentPage: page,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            },
+            data: students
+        });
+
+    } catch (error) {
+        console.error('Error in getStudentApplications controller:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'An error occurred while fetching student applications'
+        });
+    }
+};

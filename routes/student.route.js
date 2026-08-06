@@ -1,6 +1,7 @@
 import express from "express";
-import { studentApplicationForm } from "../controllers/student.controller.js";
+import { studentApplicationForm, getStudentApplications } from "../controllers/student.controller.js";
 import { upload } from "../lib/multer.lib.js";
+import { isLoggedIn, hasAccess } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -12,5 +13,7 @@ router.post("/application", upload.fields([
     { name: "other", maxCount: 1 },
     { name: "formData", maxCount: 1 },
 ]), studentApplicationForm);
+
+router.get('/students', isLoggedIn, hasAccess('readAccess'), getStudentApplications);
 
 export default router;

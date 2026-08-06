@@ -11,6 +11,17 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  policies  String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
 model StudentApplication {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
@@ -123,4 +134,75 @@ model StudentApplication {
   studentType  String?
 
   @@map("studentApplication")
+}
+
+model AgentRegistration {
+  id                             String    @id @default(cuid())
+  businessType                   String?
+  legalName                      String?
+  tradingName                    String?
+  ownerName                      String?
+  placeOfRegistration            String?
+  dateOfRegistration             DateTime?
+  businessNumber                 String?
+  maraNo                         String?
+  qeacNo                         String?
+  representingCountries          String?
+  ceoName                        String?
+  email                          String?
+  mobile                         String?
+  landline                       String?
+  contactPerson                  String?
+  contactPersonEmail             String?
+  contactPersonMobile            String?
+  contactPersonLandline          String?
+  headOfficeAddress              String?
+  website                        String?
+  numberOfBranches               String?
+  locationOfBranches             String?
+  coursesInterrestedIn           String?
+  nameOfIndustrialBody           String?
+  yearOfMembership               String?
+  institutionName                String?
+  yearOfAffiliation              String?
+  numberOfStudents               String?
+  firstYearIntakes               String?
+  sudentSupportType              String?
+  feesChargeDescription          String?
+  additionalInformationMarketing String?
+  standardFourCompliance         Boolean?  @default(false)
+  pierAccreditation              Boolean?  @default(false)
+  EsosAct                        Boolean?  @default(false)
+  studentOnBoardingPurpose       Boolean?  @default(false)
+  auscMarketingCompliance        Boolean?  @default(false)
+  auscMarketingMaterial          Boolean?  @default(false)
+  refereeOne                     String?
+  refereeContactNumber           String?
+  organization                   String?
+  position                       String?
+  refereeEmailAddress            String?
+  refereeTwo                     String?
+  refereeTwoContactNumber        String?
+  refereeTwoOrganization         String?
+  refereeTwoPosition             String?
+  refereeTwoEmailAddress         String?
+  authorizedPersonName           String?
+  authorizedPersonPosition       String?
+  signature                      String?
+  createdAt                      DateTime  @default(now())
+  updatedAt                      DateTime  @updatedAt
+
+  @@map("agentRegistration")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contactUs")
 }
